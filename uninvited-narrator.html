@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Uninvited Narrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap">
+<style>
+/* ── TOKENS ─────────────────────────────────────────── */
+:root {
+  --bg:          #F6F1E9;
+  --bg2:         #EDE7DC;
+  --surface:     #FFFFFF;
+  --text:        #1C1917;
+  --text2:       #4A453F;
+  --text3:       #7A746D;
+  --amber:       #B8722E;
+  --amber-light: #F0E4D0;
+  --sage:        #4A6B5F;
+  --sage-light:  #E3EDE9;
+  --rule:        #D8D0C4;
+  --progress-bg: #E0D9CF;
+  --chapter-num: #C17D3C;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #111218;
+    --bg2:         #191820;
+    --surface:     #1E1D28;
+    --text:        #EDE8DF;
+    --text2:       #B8B2A8;
+    --text3:       #7A7570;
+    --amber:       #D4924A;
+    --amber-light: #2A2018;
+    --sage:        #6B9B8A;
+    --sage-light:  #162220;
+    --rule:        #2E2C38;
+    --progress-bg: #252330;
+    --chapter-num: #D4924A;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:          #111218;
+  --bg2:         #191820;
+  --surface:     #1E1D28;
+  --text:        #EDE8DF;
+  --text2:       #B8B2A8;
+  --text3:       #7A7570;
+  --amber:       #D4924A;
+  --amber-light: #2A2018;
+  --sage:        #6B9B8A;
+  --sage-light:  #162220;
+  --rule:        #2E2C38;
+  --progress-bg: #252330;
+  --chapter-num: #D4924A;
+}
+
+/* ── RESET ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 18px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  line-height: 1.75;
+  padding-inline: 16px;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+
+/* ── PROGRESS BAR ────────────────────────────────────── */
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: var(--amber);
+  z-index: 100;
+  transition: width 0.1s linear;
+}
+
+/* ── THEME TOGGLE ────────────────────────────────────── */
+#theme-toggle {
+  position: fixed;
+  top: 18px; right: 18px;
+  z-index: 99;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s, background 0.2s;
+}
+#theme-toggle:hover { color: var(--amber); }
+
+/* ── LAYOUT ──────────────────────────────────────────── */
+.book-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0 60px;
+  align-items: start;
+}
+
+/* ── SIDEBAR TOC ─────────────────────────────────────── */
+.toc-sidebar {
+  position: sticky;
+  top: 40px;
+  padding-block: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.toc-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.toc-part {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+.toc-link {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text3);
+  text-decoration: none;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  line-height: 1.4;
+}
+.toc-link:hover, .toc-link.active {
+  color: var(--text);
+  border-left-color: var(--amber);
+}
+
+/* ── MAIN CONTENT ────────────────────────────────────── */
+.book-content {
+  min-width: 0;
+  padding-block: 0 80px;
+}
+
+/* ── COVER ───────────────────────────────────────────── */
+.cover {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 80px 60px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 80px;
+}
+.cover-eyebrow {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 32px;
+}
+.cover-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: balance;
+  margin-bottom: 24px;
+}
+.cover-title em {
+  font-style: italic;
+  color: var(--amber);
+}
+.cover-subtitle {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text2);
+  max-width: 480px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.cover-tagline {
+  margin-bottom: 48px;
+  max-width: 480px;
+}
+.cover-tagline-head {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.cover-tagline-sub {
+  font-family: 'Lora', serif;
+  font-size: 0.8rem;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+.cover-tagline-body {
+  font-family: 'Lora', serif;
+  font-size: 0.82rem;
+  color: var(--text3);
+  font-style: italic;
+  line-height: 1.5;
+}
+.cover-howto {
+  margin-bottom: 36px;
+  max-width: 480px;
+  padding-top: 4px;
+}
+.cover-howto-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+.cover-howto-text {
+  font-family: 'Lora', serif;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--text2);
+  line-height: 1.75;
+}
+.cover-structure {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+}
+.cover-structure-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cs-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.cs-part {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.cs-title {
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  color: var(--text2);
+  font-style: italic;
+}
+.cs-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  color: var(--text3);
+  line-height: 1.55;
+  padding-left: 106px;
+  opacity: 0.85;
+}
+.cover-rule {
+  width: 48px;
+  height: 1px;
+  background: var(--amber);
+  margin-bottom: 32px;
+}
+.cover-meta {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+}
+
+/* ── CHAPTER STRUCTURE ───────────────────────────────── */
+.part-divider {
+  margin-block: 80px 48px;
+  padding-block: 40px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.part-number {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+.part-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text);
+}
+.part-desc {
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--text2);
+  margin-top: 18px;
+  max-width: 520px;
+}
+.chain-diagram {
+  margin-top: 36px;
+  max-width: 560px;
+}
+.chain-diagram svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chapter {
+  margin-bottom: 100px;
+  scroll-margin-top: 40px;
+}
+.chapter-header {
+  margin-bottom: 40px;
+}
+.chapter-number {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--chapter-num);
+  margin-bottom: 16px;
+  display: block;
+}
+.chapter-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--text);
+  text-wrap: balance;
+  margin-bottom: 8px;
+}
+.chapter-title em { font-style: italic; color: var(--amber); }
+.chapter-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--sage);
+  margin-top: 10px;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+.chapter-intro {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--text2);
+  border-left: 3px solid var(--amber);
+  padding-left: 20px;
+  margin-top: 24px;
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+.chapter-rule {
+  width: 32px;
+  height: 1px;
+  background: var(--rule);
+  margin: 32px 0;
+}
+
+/* ── PROSE ───────────────────────────────────────────── */
+.prose {
+  max-width: 650px;
+}
+.prose p {
+  font-size: 1rem;
+  line-height: 1.85;
+  color: var(--text);
+  margin-bottom: 1.4em;
+}
+.prose p:first-child::first-letter {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.8em;
+  font-weight: 600;
+  float: left;
+  line-height: 0.78;
+  margin-right: 8px;
+  margin-top: 6px;
+  color: var(--amber);
+}
+.prose h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 2em 0 0.6em;
+  font-style: italic;
+}
+.prose strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── PULL QUOTE ──────────────────────────────────────── */
+.pull-quote {
+  margin: 2.5em 0;
+  padding: 28px 32px;
+  border-left: 3px solid var(--amber);
+  background: var(--amber-light);
+  border-radius: 0 2px 2px 0;
+}
+.pull-quote p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--text);
+  margin: 0;
+}
+.pull-quote p::first-letter { all: unset; }
+.pull-quote cite {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  margin-top: 12px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+/* ── EXAMPLE BOX ─────────────────────────────────────── */
+.example-box {
+  margin: 2.2em 0;
+  background: var(--sage-light);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.example-label {
+  background: var(--sage);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 8px 20px;
+}
+.example-body {
+  padding: 20px 24px;
+}
+.example-body p {
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 0.8em;
+}
+.example-body p:last-child { margin-bottom: 0; }
+.example-body p::first-letter { all: unset; }
+.example-step {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin-bottom: 4px;
+  display: block;
+}
+.example-thought {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text2);
+}
+
+/* ── CHAIN VISUAL ────────────────────────────────────── */
+.chain-visual {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 2em 0;
+  background: var(--bg2);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 20px 24px;
+}
+.chain-node {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.chain-node.highlight {
+  background: var(--amber);
+  color: #fff;
+  border-color: var(--amber);
+}
+.chain-arrow {
+  color: var(--text3);
+  font-size: 1.1rem;
+  padding: 0 8px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── SIGNAL ITEM ─────────────────────────────────────── */
+.signal-item {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 32px;
+  align-items: flex-start;
+}
+.signal-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--amber);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: right;
+  margin-top: -4px;
+}
+.signal-body h4 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.signal-body p {
+  font-size: 0.92rem;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.signal-rule {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--amber-light);
+  display: inline-block;
+  border-radius: 2px;
+}
+
+/* ── LAYER CARD ──────────────────────────────────────── */
+.layer-card {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 24px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+.layer-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--sage);
+}
+.layer-card.amber::before { background: var(--amber); }
+.layer-card.deep::before { background: var(--text2); }
+.layer-num {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.layer-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.layer-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.65;
+}
+.layer-quote {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--amber);
+  margin-top: 10px;
+}
+
+/* ── SECTION BREAK ───────────────────────────────────── */
+.section-break {
+  text-align: center;
+  color: var(--text3);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.4em;
+  margin: 3em 0;
+}
+
+/* ── ABOUT THE AUTHOR ────────────────────────────────── */
+.about-author {
+  max-width: 640px;
+  margin: 80px auto 0;
+  padding: 0 0 60px;
+}
+.about-rule {
+  width: 40px;
+  height: 2px;
+  background: var(--amber);
+  margin-bottom: 24px;
+  opacity: 0.6;
+}
+.about-eyebrow {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 20px;
+}
+.about-body {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--text2);
+}
+.about-body p { margin-bottom: 1.2em; }
+.about-intro {
+  color: var(--text);
+  font-weight: 500;
+}
+.about-closing {
+  font-style: italic;
+  color: var(--text3);
+  margin-bottom: 0 !important;
+}
+
+/* ── FOOTER ──────────────────────────────────────────── */
+.book-footer {
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+}
+.book-footer p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 800px) {
+  .book-wrapper {
+    grid-template-columns: 1fr;
+  }
+  .toc-sidebar {
+    display: none;
+  }
+  .cover-title { font-size: clamp(2.2rem, 10vw, 3.5rem); }
+}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<button id="theme-toggle" aria-label="Toggle theme">◐ Theme</button>
+
+<div class="book-wrapper">
+  <!-- SIDEBAR TOC -->
+  <aside class="toc-sidebar" aria-label="Table of contents">
+    <div class="toc-label">Contents</div>
+
+    <a class="toc-link" href="#cover">The Book</a>
+    <a class="toc-link" href="#introduction">Introduction</a>
+
+    <div class="toc-part">Part I · The Discovery</div>
+    <a class="toc-link" href="#ch1">1. The Voice Before the Voice</a>
+    <a class="toc-link" href="#ch2">I Think, Therefore It's True</a>
+    <a class="toc-link" href="#ch3">3. The Chain</a>
+
+    <div class="toc-part">Part II · The Chain</div>
+    <a class="toc-link" href="#ch4">4. When Love Is a Story</a>
+    <a class="toc-link" href="#ch5">5. The Ripple Effects</a>
+
+    <div class="toc-part">Part III · Solution</div>
+    <a class="toc-link" href="#ch6">6. Changing the Scenery</a>
+    <a class="toc-link" href="#ch7">7. Managing the Storm</a>
+    <a class="toc-link" href="#ch8">8. The Willpower Trap</a>
+
+    <div class="toc-part">Part IV · The Root</div>
+    <a class="toc-link" href="#ch9">9. Seven Signals</a>
+    <a class="toc-link" href="#ch10">10. Questioning Without Collapsing</a>
+    <a class="toc-link" href="#ch11">11. The Three Layers</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="book-content">
+
+    <!-- COVER -->
+    <section class="cover" id="cover">
+      <p class="cover-eyebrow">A Book on the Mind</p>
+      <h1 class="cover-title">The <em>Uninvited</em><br>Narrator</h1>
+      <p class="cover-subtitle">How to question the thoughts that run your life before they become your life</p>
+      <div class="cover-tagline">
+        <p class="cover-tagline-head">The Difference That Changes Everything</p>
+        <p class="cover-tagline-sub"><em>— Patchwork vs Root Fix —</em></p>
+        <p class="cover-tagline-body">The patchwork fix feels like progress. The root fix changes everything.</p>
+      </div>
+      <div class="cover-howto">
+        <p class="cover-howto-label">How to read this</p>
+        <p class="cover-howto-text">I didn't write this to give you answers. I wrote it because I spent years watching people — strangers on roads, friends in crisis, myself in quiet moments — all solving the wrong problem with tremendous effort. This framework is what I found underneath all of it. Read it slowly. Let it sit. The parts that make you uncomfortable are usually the parts that matter most.</p>
+      </div>
+      <div class="cover-structure">
+        <div class="cover-structure-row">
+          <div class="cs-header"><span class="cs-part">Part One</span><span class="cs-title">Understanding Thoughts</span></div>
+          <p class="cs-desc">What automatic thoughts are, where they come from, and why you rarely notice them happening.</p>
+        </div>
+        <div class="cover-structure-row">
+          <div class="cs-header"><span class="cs-part">Part Two</span><span class="cs-title">Understanding The Chain</span></div>
+          <p class="cs-desc">How a single thought quietly becomes a feeling, then a behaviour, then a pattern — before you ever question it.</p>
+        </div>
+        <div class="cover-structure-row">
+          <div class="cs-header"><span class="cs-part">Part Three</span><span class="cs-title">Understanding Patchwork vs Root Fix</span></div>
+          <p class="cs-desc">Why most of what people call "fixing the problem" is really just managing the surface.</p>
+        </div>
+        <div class="cover-structure-row">
+          <div class="cs-header"><span class="cs-part">Part Four</span><span class="cs-title">The Solution (Root Fix)</span></div>
+          <p class="cs-desc">The root fix: questioning thoughts with clarity, confidence, and a depth of self-awareness most people never reach.</p>
+        </div>
+      </div>
+      <div class="cover-rule"></div>
+      <p class="cover-meta">A framework for thought, emotion, and the chain that connects them</p>
+    </section>
+
+    <!-- INTRODUCTION -->
+    <section class="chapter" id="introduction">
+      <div class="chapter-header">
+        <span class="chapter-number">Introduction</span>
+        <h2 class="chapter-title">There Is a Voice<br>Speaking Before You Are</h2>
+      </div>
+      <div class="prose">
+        <p>You did not choose your first thought this morning. It arrived the moment you became aware — before you opened your eyes, before you decided what kind of day to have. It was already there, fully formed, carrying a mood, a color, a verdict about your life.</p>
+        <p>This is the central fact most people never examine: thoughts are not something we do. They are something that happens to us. The brain generates them continuously, automatically, shaped by fear and memory and the stories we have been telling ourselves for years. And then — this is the part that changes everything — we mistake them for truth.</p>
+        <p>We say "I think" as if thinking were a deliberate act. But the first narrator speaks before we arrive. We inherit the thought already assembled, already certain of itself, already carrying an emotional charge. By the time we are "thinking," we are actually just following.</p>
+
+        <div class="pull-quote">
+          <p>We think we connect the dots and arrive at a thought. Actually we have the thought first — and then connect only the dots that lead back to it.</p>
+        </div>
+
+        <p>This framework is built from a simple observation that turns out to be profound: everything we call suffering begins with a thought we never questioned. Not a bad situation, not a difficult feeling, not a destructive habit. A thought. One thought, arriving uninvited, that we accepted as true — and then watched as it became an emotion, then a behavior, then a pattern, then a life.</p>
+        <p>And because no one ever showed us where the chain begins, we have spent enormous energy fixing everything except the source. We changed jobs. We meditated. We set rules for ourselves. We found new people to love. And the same suffering returned — because it was never in the situation, or the emotion, or the behavior. It was in the thought we brought with us everywhere.</p>
+        <p>What follows is not a self-help formula. It is a map. It shows you where the chain starts, how it builds, why it holds, and — most importantly — how to find the one link that, when examined, changes everything downstream.</p>
+        <p>The narrator has been speaking for years. It is time to learn who it is.</p>
+      </div>
+    </section>
+
+    <!-- PART ONE -->
+    <div class="part-divider" id="part1">
+      <p class="part-number">Part One</p>
+      <h2 class="part-title">The Discovery</h2>
+    </div>
+
+    <!-- CHAPTER 1 -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter One</span>
+        <h2 class="chapter-title">The Voice Before<br>the <em>Voice</em></h2>
+        <p class="chapter-intro">Thoughts are not something you do. They are something that happens to you. Understanding this single fact changes everything that comes after it.</p>
+      </div>
+      <div class="prose">
+        <p>The human brain generates approximately 60,000 thoughts per day. You did not request any of them. They arise from an intricate machinery built across billions of neural connections — shaped by your past, your fears, your desires, and patterns laid down so long ago you have no memory of when they formed.</p>
+        <p>This is the Default Mode Network — the brain's resting state, its background hum. Neuroscientists discovered it accidentally, when they noticed that certain regions of the brain were most active not when people were focused on a task, but when they were doing nothing in particular. The brain, it turned out, is never truly idle. It is always narrating.</p>
+        <p>The narrator does not announce itself. It does not say: <em>here comes a thought, evaluate it before accepting it.</em> It presents its output directly as reality. The thought arrives already wearing the costume of truth.</p>
+
+        <div class="pull-quote">
+          <p>The brain generates thoughts the way lungs generate breath. The question is not whether it will produce them — but whether you will believe everything it says.</p>
+        </div>
+
+        <p>Consider three people sitting in the same waiting room, waiting for the same medical test results. Their brains generate three completely different internal realities. One person is convinced something is wrong. Another is confident everything is fine. The third is not thinking about it at all — they are running through tomorrow's grocery list. The external situation is identical. The internal experience is entirely different.</p>
+        <p>What separates them is not intelligence, or strength, or optimism. It is simply which thought each brain generated first — shaped by everything each person has ever experienced, feared, and survived.</p>
+
+        <h3>The moment before the thought</h3>
+        <p>There is a gap — extremely brief, almost imperceptible — between when a thought is generated and when you become aware of it. In that gap, everything is decided. The thought is born already labeled: urgent, certain, true. By the time you receive it, it has already been processed, interpreted, and delivered with complete confidence.</p>
+        <p>The thought <em>he doesn't care about me</em> does not arrive with a question mark. It arrives as a statement. The thought <em>I'm going to fail this</em> does not present itself as a possibility worth examining. It comes as a warning from a reliable source.</p>
+        <p>That source is your own history. The brain learns what to expect from what it has already seen. It is not trying to deceive you. It is trying to protect you by pattern-matching your current situation to your past experiences as fast as possible.</p>
+        <p>The problem is that it is very fast and not always very accurate.</p>
+        <p>The beginning of all the work here is this: the thought is not the truth. The thought is the brain's best guess, assembled in milliseconds from the raw material of your past. Sometimes it is correct. Sometimes it is the echo of a wound wearing the face of a fact.</p>
+        <p>Learning to tell the difference is the most important skill a human being can develop. And it begins with a single question, asked gently and without judgment: <em>Where did this thought come from?</em></p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 2 -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Two</span>
+        <h2 class="chapter-title"><em>I Think,</em><br>Therefore It's True</h2>
+        <p class="chapter-intro">Why we trust our own thoughts completely — and why that trust is the source of so much unnecessary suffering.</p>
+      </div>
+      <div class="prose">
+        <p>I came across a French philosopher — René Descartes — who built his entire philosophy on one foundation: <em>Cogito ergo sum.</em> I think, therefore I am. The act of thinking was proof of existence itself. It stopped me. Because what if the thought doing the thinking isn't even yours? What he did not quite say — but what most of us have quietly believed ever since — is the extension that follows: <em>I think this, therefore it is true.</em></p>
+        <p>This is the logic running underneath most human suffering. My thought is inside me. I am a real person. Therefore my thought is real. And if it is real, then it is trustworthy. And if it is trustworthy, then I should follow wherever it leads.</p>
+        <p>The thought <em>they are pulling away</em> feels exactly like an observation. It feels like something the person noticed — not something their brain assembled from fear and memory and the need to explain a silence. The difference between an observation and a generated thought is invisible from the inside. Both feel identical.</p>
+
+        <div class="pull-quote">
+          <p>You can know your pattern perfectly and still be completely trapped inside it. Understanding is not the same as freedom.</p>
+        </div>
+
+        <h3>The identity layer</h3>
+        <p>There is a second problem, deeper than simple belief. Over time, thoughts do not just become beliefs — they become identity. The thought <em>I am not good with money</em> stops being a thought and becomes a description of a person. The thought <em>people always leave me</em> stops being a pattern someone noticed and becomes a fact about the world.</p>
+        <p>When a thought becomes part of identity, questioning it is no longer an intellectual exercise. It feels like self-destruction. To say <em>that thought might not be true</em> is to say <em>you might not be who you think you are.</em> And the brain will fight to protect the self it has constructed — even when that self is built from painful untruths — because a familiar identity, however painful, feels safer than the uncertainty of no identity at all.</p>
+        <p>This is why telling someone their thought is wrong does not work. It activates defense. The brain becomes a lawyer defending a client it has already decided is innocent — presenting only the evidence that fits, dismissing everything that contradicts.</p>
+
+        <div class="example-box">
+          <div class="example-label">Illustration</div>
+          <div class="example-body">
+            <p>Two people receive the same message: <em>"thinking of you"</em> at midnight after two weeks of silence.</p>
+            <p><strong>Person A's brain generates:</strong> <span class="example-thought">"They miss me. This means something is changing."</span></p>
+            <p><strong>Person B's brain generates:</strong> <span class="example-thought">"They're lonely and I'm convenient at midnight."</span></p>
+            <p>Both feel equally true. Neither person is lying. Their brains produced different interpretations shaped by what each one needs to be true — and the thought arrived already wearing certainty.</p>
+          </div>
+        </div>
+
+        <p>The path forward is not to attack the thought. It is to become curious about it. Not: <em>you are wrong.</em> But: <em>where did you come from, and what are you trying to protect?</em></p>
+        <p>Curiosity is the only thing that bypasses the identity defense. Because curiosity does not threaten the self — it simply asks a question. And in the space that question creates, something remarkable becomes possible: the thought and the thinker can be briefly, gently separated. You can look at the thought from one inch of distance and ask: <em>is this something I observed, or something I generated?</em></p>
+        <p>That one inch is everything.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 3 -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Three</span>
+        <h2 class="chapter-title">The <em>Chain</em></h2>
+        <p class="chapter-intro">Between every situation and every response, there is a sequence. Understanding this sequence is the beginning of real change.</p>
+      </div>
+      <div class="prose">
+        <p>Here is the sequence no one teaches:</p>
+
+        <div class="chain-visual">
+          <div class="chain-node">Situation</div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node highlight">Thought</div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node">Emotion</div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node">Behavior</div>
+          <div class="chain-arrow">→</div>
+          <div class="chain-node">New Situation</div>
+        </div>
+
+        <p>A situation occurs. The brain generates a thought about it. That thought creates an emotion. The emotion drives a behavior. The behavior creates a new situation — which generates a new thought. The chain loops. And because the first thought was never examined, the loop repeats indefinitely.</p>
+        <p>The highlighted link is the one that matters. The thought is the source. Everything else is downstream.</p>
+
+        <div class="example-box">
+          <div class="example-label">The Chain in Motion</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>He doesn't reply for four hours.</p>
+            <p><span class="example-step">Thought (generated)</span><span class="example-thought">"He is ignoring me on purpose."</span></p>
+            <p><span class="example-step">Emotion</span>Anxiety → hurt → anger.</p>
+            <p><span class="example-step">Behavior</span>A cold follow-up message gets sent.</p>
+            <p><span class="example-step">New Situation</span>They get a confused reply asking why they seem off.</p>
+            <p><span class="example-step">New Thought (generated)</span><span class="example-thought">"See — they only pay attention when I pull away. I need to do this more."</span></p>
+            <p>A manipulation pattern has now been accidentally trained — based entirely on a thought the brain invented in hour one.</p>
+          </div>
+        </div>
+
+        <p>Notice what happened. The coldness was not a decision. It flowed naturally from the emotion, which flowed naturally from the thought. The new thought at the end was not decided either — it arrived as a conclusion, drawn from evidence the first thought had already shaped.</p>
+        <p>The chain is self-sealing. Each link generates the next so smoothly that the whole sequence feels like reality unfolding — not like a story the brain is writing in real time.</p>
+
+        <h3>The everyday chains</h3>
+        <p>This is not only about love or relationships. The chain runs in every corner of a person's life.</p>
+
+        <div class="example-box">
+          <div class="example-label">At the Gym</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>Cold morning. Planned gym session.</p>
+            <p><span class="example-step">Thought</span><span class="example-thought">"My body probably needs rest today."</span></p>
+            <p><span class="example-step">Emotion</span>Relief. Comfort.</p>
+            <p><span class="example-step">Behavior</span>Stays in bed.</p>
+            <p><span class="example-step">New Thought</span><span class="example-thought">"I already broke my streak — I'll start fresh Monday."</span></p>
+            <p>The brain generated a medical-sounding excuse that felt completely reasonable. Nobody questioned it. It was wearing a lab coat.</p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">At Work</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>Boss announces a team presentation on Friday.</p>
+            <p><span class="example-step">Thought</span><span class="example-thought">"I'm going to embarrass myself. I'm not good at speaking."</span></p>
+            <p><span class="example-step">Emotion</span>Dread. Preemptive shame.</p>
+            <p><span class="example-step">Behavior</span>Avoids preparing all week — thinking about it is too uncomfortable.</p>
+            <p><span class="example-step">New Situation</span>Friday arrives. Unprepared. Stumbles through.</p>
+            <p><span class="example-step">New Thought</span><span class="example-thought">"I knew it. I should never volunteer for anything visible."</span></p>
+            <p>The brain predicted failure. The prediction caused avoidance. The avoidance caused the failure. The brain says "I told you so" — not realizing it wrote the ending it predicted.</p>
+          </div>
+        </div>
+
+        <p>Different contexts, same architecture. A thought arrives. It is accepted without examination. The chain completes. The person believes they have witnessed reality — when what they actually witnessed was the thought they started with, reflected back at them by the circumstances it created.</p>
+      </div>
+    </section>
+
+    <!-- PART TWO -->
+    <div class="part-divider" id="part2">
+      <p class="part-number">Part Two</p>
+      <h2 class="part-title">The Chain in Action</h2>
+    </div>
+
+    <!-- CHAPTER 4 -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Four</span>
+        <h2 class="chapter-title">When Love Is<br>a <em>Story</em></h2>
+        <p class="chapter-intro">Love depression is not a weakness. It is what happens when the brain's need to preserve hope becomes stronger than its capacity for honest perception.</p>
+      </div>
+      <div class="prose">
+        <p>They love someone who is exploring other people. That person keeps them close because the relationship offers warmth, attention, emotional support — all the benefits of closeness without any of its responsibilities. And they stay, not because they are foolish, but because their brain is doing something very specific: generating thoughts that keep the story alive.</p>
+        <p>The brain under love depression works like a skilled defense attorney. It has already decided the verdict — <em>they love me, this will work out</em> — and from that point forward it only considers evidence that supports the case. Everything that contradicts it is reinterpreted, dismissed, or filed under <em>temporary.</em></p>
+
+        <div class="example-box">
+          <div class="example-label">The Instagram Story</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>They see a story posted. The person they love is out with someone new, laughing.</p>
+            <p><span class="example-step">Brain generates</span><span class="example-thought">"That's probably just a friend. They don't look as happy as they did with me. They'll realize what they lost."</span></p>
+            <p><span class="example-step">What's actually happening</span>The brain cannot tolerate the image of being replaced. So it immediately builds a story that keeps hope alive. It cherry-picks an expression, finds something that looks "less" happy, and constructs a narrative where they are still the one who matters most.</p>
+            <p>The thought arrives as <strong>observation.</strong> It is actually <strong>protection.</strong></p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">The Midnight Text</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>He sends "hey, you up?" after two weeks of silence.</p>
+            <p><span class="example-step">Brain generates</span><span class="example-thought">"They were thinking about me. They miss me. Maybe this is the beginning of something again."</span></p>
+            <p><span class="example-step">What's actually happening</span>The brain takes a tiny piece of contact and inflates it into evidence for what it desperately needs to be true. A two-word text becomes a love letter.</p>
+            <p>A more honest reading: they were bored, lonely, or wanted something — and this person was the easiest option available at midnight.</p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">"You're My Best Friend"</div>
+          <div class="example-body">
+            <p><span class="example-step">Situation</span>After a whole day helping him through a problem, he says "I don't know what I'd do without you."</p>
+            <p><span class="example-step">Brain generates</span><span class="example-thought">"They mean more than friend. They're just scared to say it. The love is still there — they show it differently."</span></p>
+            <p><span class="example-step">What's actually happening</span>"Best friend" was a clear, complete sentence. But the brain translated it into a coded message, because accepting it literally would mean accepting placement permanently outside the category of romantic love. That is too painful. So the brain finds a hidden meaning.</p>
+            <p>Something different was heard — because it needed to be.</p>
+          </div>
+        </div>
+
+        <p>The tragedy is not the love itself. Love is not the problem. The problem is that the brain has constructed an entire architecture of thought designed to make that love feel justified — and every thought in that architecture is working against the capacity to see clearly.</p>
+        <p>Asking someone to simply stop loving another person will not work. The love is not the first link. The thought is. The thought that says <em>this is going somewhere</em>, the thought that says <em>they need me specifically</em>, the thought that says <em>what we had was real and it is still there underneath everything</em> — these are the first links. Everything painful flows from them.</p>
+
+        <div class="pull-quote">
+          <p>The thought came first. The love followed the thought. This means the work begins not in the heart but one step earlier — in the story the brain decided to tell about what the heart was feeling.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 5 -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Five</span>
+        <h2 class="chapter-title">The <em>Ripple</em> Effects</h2>
+        <p class="chapter-intro">Jealousy, anger, obsession, self-blame — none of these begin where we think they begin. They are all downstream of a thought that was never questioned.</p>
+      </div>
+      <div class="prose">
+        <p>A thought does not stay a thought. It moves. It becomes a feeling. The feeling drives an action. And somewhere in that movement, it picks up a name — jealousy, anger, taking things personally — and the person believes they have a jealousy problem, an anger problem, a self-worth problem. They do not. They have an unexamined thought.</p>
+
+        <h3>Taking things personally</h3>
+        <p>Someone does not reply for a day. The other person takes it personally — feels hurt, dismissed, unimportant. But the thought underneath assumed they were the center of the other's actions before any evidence existed. The person might have been dealing with work, stress, another relationship, or simply not felt like talking to anyone. The brain made their silence personal automatically. Taking things personally is almost always a thought that quietly places yourself at the center of someone else's behavior.</p>
+
+        <h3>Jealousy</h3>
+        <p>They see the person they love laughing with someone else. Jealousy arrives — the chest tightens, anger and smallness at the same time. But underneath: <em>that should be mine.</em> The thought carried ownership over a person who never agreed to be owned — especially not anymore. The jealousy is not really about the other person. It is about the brain defending a story of possession that has no basis in current reality. Jealousy is almost always grief in disguise — dressed in anger so it feels more powerful than sadness.</p>
+
+        <h3>Anger</h3>
+        <p>Plans get cancelled. The brain generates: <em>they do this because they know I'll always be there.</em> Anger rises. Something sharp gets said. The other person pulls back. Things feel worse. But the original thought assumed intention — that the cancellation was designed to devalue. There was no way to actually know why the plans were cancelled. The brain filled the gap with the most emotionally charged interpretation because under love depression, the nervous system is already on high alert. Any ambiguous signal reads as threat.</p>
+
+        <h3>Obsessive thinking</h3>
+        <p>The brain generates: <em>if I can just figure out why they pulled away, I can fix it.</em> Every conversation, every text, every look gets replayed. Looking for the answer. But the thought assumed there is something the person did that caused this — and therefore something they can undo. The obsessive loop is the brain trying to find control in a situation where there is none. The thinking feels productive. It is pain spinning in place.</p>
+
+        <h3>Self-blame</h3>
+        <p>The brain generates: <em>if I was different — less needy, more attractive, more fun — they would choose me.</em> Editing begins. But their choices reflect their own readiness, their own patterns. The person made themselves the variable when the other is the one who is inconsistent. Self-blame is the brain choosing a painful story it can control — <em>it is my fault, so I can fix it</em> — over a painful story it cannot: <em>they are simply not choosing me, and I cannot change that.</em></p>
+
+        <div class="pull-quote">
+          <p>These are not character flaws. They are what happens when a person builds their emotional life on unquestioned automatic thoughts. The thought comes first. Everything else is downstream of it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART THREE -->
+    <div class="part-divider" id="part3">
+      <p class="part-number">Part Three</p>
+      <h2 class="part-title">Solution: Patchwork<br><em>vs.</em> Root Fix</h2>
+      <p class="part-desc">Most people try to solve the wrong part of the chain. They change the situation, calm the emotion, or control the behavior — and when the pain returns, they try harder. This section maps those three patchwork attempts and explains precisely why they fall short. The fix that actually works begins one step earlier: at the thought itself.</p>
+
+      <div class="chain-diagram">
+        <svg viewBox="0 0 660 178" xmlns="http://www.w3.org/2000/svg" aria-label="Chain diagram: Situation → Thought → Emotion → Behavior, patchwork fixes target Situation, Emotion, Behavior; root fix targets Thought">
+          <style>
+            .cd-np-bg  { fill: var(--amber-light); }
+            .cd-np-bd  { fill: none; stroke: var(--amber); stroke-opacity: 0.35; stroke-width: 1.5; stroke-dasharray: 5.5 3.5; }
+            .cd-nr-bg  { fill: var(--sage); }
+            .cd-lp     { font-family: 'DM Sans', system-ui; font-size: 9.5px; font-weight: 500; letter-spacing: 1.3px; fill: var(--text2); }
+            .cd-lr     { font-family: 'DM Sans', system-ui; font-size: 9.5px; font-weight: 500; letter-spacing: 1.3px; fill: var(--sage-light); }
+            .cd-ls     { font-family: 'DM Sans', system-ui; font-size: 7px; font-weight: 400; letter-spacing: 2px; fill: var(--sage-light); opacity: 0.55; }
+            .cd-ch     { stroke: var(--text3); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .cd-pa     { stroke: var(--amber); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; stroke-linecap: round; stroke-linejoin: round; }
+            .cd-ph     { stroke: var(--amber); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .cd-ra     { stroke: var(--sage); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .cd-rh     { stroke: var(--sage); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .cd-flp    { font-family: 'DM Sans', system-ui; font-size: 8px; fill: var(--amber); opacity: 0.8; }
+            .cd-flr    { font-family: 'DM Sans', system-ui; font-size: 8px; font-weight: 600; fill: var(--sage); }
+            .cd-bp     { font-family: 'DM Sans', system-ui; font-size: 7px; font-weight: 500; letter-spacing: 2px; fill: var(--amber); opacity: 0.45; }
+            .cd-br     { font-family: 'DM Sans', system-ui; font-size: 7px; font-weight: 500; letter-spacing: 2px; fill: var(--sage); opacity: 0.6; }
+          </style>
+
+          <!-- Situation -->
+          <rect x="52"  y="12" width="112" height="44" rx="3" class="cd-np-bg"/>
+          <rect x="52"  y="12" width="112" height="44" rx="3" class="cd-np-bd"/>
+          <text x="108" y="38" text-anchor="middle" class="cd-lp">SITUATION</text>
+
+          <!-- Thought (root) -->
+          <rect x="195" y="7"  width="112" height="54" rx="3" class="cd-nr-bg"/>
+          <text x="251" y="33" text-anchor="middle" class="cd-lr">THOUGHT</text>
+          <text x="251" y="50" text-anchor="middle" class="cd-ls">ROOT</text>
+
+          <!-- Emotion -->
+          <rect x="338" y="12" width="112" height="44" rx="3" class="cd-np-bg"/>
+          <rect x="338" y="12" width="112" height="44" rx="3" class="cd-np-bd"/>
+          <text x="394" y="38" text-anchor="middle" class="cd-lp">EMOTION</text>
+
+          <!-- Behavior -->
+          <rect x="481" y="12" width="112" height="44" rx="3" class="cd-np-bg"/>
+          <rect x="481" y="12" width="112" height="44" rx="3" class="cd-np-bd"/>
+          <text x="537" y="38" text-anchor="middle" class="cd-lp">BEHAVIOR</text>
+
+          <!-- Chain arrows -->
+          <path d="M 164,34 L 191,34 M 184,27 L 192,34 L 184,41" class="cd-ch"/>
+          <path d="M 307,34 L 334,34 M 327,27 L 335,34 L 327,41" class="cd-ch"/>
+          <path d="M 450,34 L 477,34 M 470,27 L 478,34 L 470,41" class="cd-ch"/>
+
+          <!-- Patchwork arrows -->
+          <path d="M 108,135 L 108,60" class="cd-pa"/>
+          <path d="M 102,68 L 108,60 L 114,68" class="cd-ph"/>
+          <path d="M 394,135 L 394,60" class="cd-pa"/>
+          <path d="M 388,68 L 394,60 L 400,68" class="cd-ph"/>
+          <path d="M 537,135 L 537,60" class="cd-pa"/>
+          <path d="M 531,68 L 537,60 L 543,68" class="cd-ph"/>
+
+          <!-- Root fix arrow -->
+          <path d="M 251,135 L 251,65" class="cd-ra"/>
+          <path d="M 244,74 L 251,65 L 258,74" class="cd-rh"/>
+
+          <!-- Tick lines -->
+          <line x1="86"  y1="135" x2="130" y2="135" stroke="var(--amber)" stroke-width="0.8" opacity="0.18"/>
+          <line x1="372" y1="135" x2="416" y2="135" stroke="var(--amber)" stroke-width="0.8" opacity="0.18"/>
+          <line x1="515" y1="135" x2="559" y2="135" stroke="var(--amber)" stroke-width="0.8" opacity="0.18"/>
+          <line x1="229" y1="135" x2="273" y2="135" stroke="var(--sage)"  stroke-width="0.8" opacity="0.25"/>
+
+          <!-- Fix labels -->
+          <text x="108" y="149" text-anchor="middle" class="cd-flp">escape /</text>
+          <text x="108" y="161" text-anchor="middle" class="cd-flp">avoid</text>
+          <text x="251" y="149" text-anchor="middle" class="cd-flr">question &amp;</text>
+          <text x="251" y="161" text-anchor="middle" class="cd-flr">reframe</text>
+          <text x="394" y="149" text-anchor="middle" class="cd-flp">soothe /</text>
+          <text x="394" y="161" text-anchor="middle" class="cd-flp">manage</text>
+          <text x="537" y="149" text-anchor="middle" class="cd-flp">control /</text>
+          <text x="537" y="161" text-anchor="middle" class="cd-flp">resist</text>
+
+          <!-- Band labels -->
+          <text x="338" y="178" text-anchor="middle" class="cd-bp">← PATCHWORK FIX →</text>
+          <text x="251" y="178" text-anchor="middle" class="cd-br">ROOT FIX</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- CHAPTER 6 -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Six</span>
+        <h2 class="chapter-title">Changing<br>the <em>Scenery</em></h2>
+        <p class="chapter-intro">When we change the situation to escape the thought, the thought is already at the destination waiting for us.</p>
+      </div>
+      <div class="prose">
+        <p>The most natural human response to pain is to change what is around us. Leave the relationship. Change cities. Find new friends. Quit the job. And sometimes — we will come back to this — that is exactly the right move. But often it is not escape from pain. It is the relocation of it.</p>
+
+        <div class="example-box">
+          <div class="example-label">The New City</div>
+          <div class="example-body">
+            <p>Someone feels suffocated and unseen in their hometown. Moves abroad for a fresh start. Arrives, meets new people, builds a new life. Within a year: the same loneliness. The same feeling of not being truly known.</p>
+            <p>The city changed. The thought — <span class="example-thought">"people don't really connect with me deeply"</span> — moved with the suitcase. It was already at the apartment on arrival.</p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">The New Job</div>
+          <div class="example-body">
+            <p>A person feels their boss systematically undervalues them. Quits. Joins a company with a different industry, different city, completely different culture. Within six months: the same feeling about the new manager.</p>
+            <p>The thought — <span class="example-thought">"people in authority don't respect what I bring"</span> — was the lens, not the boss. A new boss simply became the new screen on which the old film played.</p>
+          </div>
+        </div>
+
+        <h3>When changing the situation is absolutely right</h3>
+        <p>There are situations that must change — and changing them is wisdom, not avoidance. The clearest cases: active harm, genuine danger, environments that are objectively destructive. A person being physically abused does not need to examine their thoughts before leaving. They need to leave. The thought work, if it is needed, can come after safety is established.</p>
+        <p>A person in a workplace where they are being systematically harassed, in a friendship that has been one-sided across years of clear evidence, in an addiction environment where every night brings the same trigger — for these, changing the situation is the correct first move. Not because the thought doesn't matter, but because some situations must be removed before the nervous system is stable enough to do anything deeper.</p>
+        <p>The distinction is always this: <em>am I changing this to escape examining my thoughts, or am I changing this so I am safe enough to examine them?</em> One is avoidance. The other is wisdom. Sometimes you must stabilize the patient before you do the surgery.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 7 -->
+    <section class="chapter" id="ch7">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Seven</span>
+        <h2 class="chapter-title">Managing<br>the <em>Storm</em></h2>
+        <p class="chapter-intro">Soothing an emotion without questioning what generated it is like fixing the smoke alarm without finding the fire.</p>
+      </div>
+      <div class="prose">
+        <p>The human emotional management industry is enormous. Meditation apps, yoga studios, breathwork retreats, sound baths, journaling practices, spiritual communities. All of it real, all of it valuable, all of it pointing in the same direction: toward the feeling. Toward making the feeling quieter, softer, more manageable.</p>
+        <p>None of it points one step earlier — toward the thought that keeps generating the feeling.</p>
+
+        <div class="example-box">
+          <div class="example-label">The Meditating Heart</div>
+          <div class="example-body">
+            <p>Someone feels heartbreak and anxiety. Starts meditating daily. Becomes genuinely calmer, more present. The nervous system softens. People notice.</p>
+            <p>Then a text arrives. The anxiety is back at full volume within seconds. Because the thought — <span class="example-thought">"they might come back if I'm patient"</span> — was never examined. Meditation gave a quieter mind. The suffering is now just more peaceful.</p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">The Spiritual Seeker</div>
+          <div class="example-body">
+            <p>A person feels a deep, persistent emptiness. Discovers spirituality. Reads, attends retreats, finds community. Experiences genuine moments of peace and connection — real moments, not fabricated.</p>
+            <p>Returns to daily life. The emptiness returns on schedule. Because the thought — <span class="example-thought">"there is something fundamentally missing in me"</span> — was never questioned. The retreats offered temporary altitude. The same ground was waiting at the bottom of every descent.</p>
+          </div>
+        </div>
+
+        <h3>When managing emotions is absolutely right</h3>
+        <p>A person who loses a child and cannot function, cannot eat, cannot speak — that emotion requires direct intervention. The nervous system must be stabilized before anything else is possible. Medication, community, somatic therapy — these are not avoidance. They are making the system capable of survival.</p>
+        <p>Clinical depression and anxiety have biological components. The brain chemistry sometimes needs stabilizing before the thought layer is even accessible. You cannot examine thoughts when your entire nervous system is in collapse. The emotion work here is not patchwork — it is preparation.</p>
+        <p>Emotion management is valuable when it is the bridge — when it restores enough stability that deeper work becomes possible. It becomes patchwork when it is the destination.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 8 -->
+    <section class="chapter" id="ch8">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Eight</span>
+        <h2 class="chapter-title">The Willpower<br><em>Trap</em></h2>
+        <p class="chapter-intro">Changing behavior through willpower is like holding a beach ball underwater. You can do it. But the moment you tire, it flies straight back up.</p>
+      </div>
+      <div class="prose">
+        <p>Behavior change is the most popular form of self-improvement because it is the most visible. Stop doing the thing. Start doing the other thing. Track it. Measure it. Build a system around it. Willpower is the engine.</p>
+        <p>The problem with willpower is that it competes directly with thought — and thought has a significant structural advantage. Willpower is a resource that depletes. Thought is a generator that doesn't.</p>
+
+        <div class="example-box">
+          <div class="example-label">The No-First-Text Rule</div>
+          <div class="example-body">
+            <p>A decision is made to stop reaching out first. A firm rule is set. Four days pass.</p>
+            <p>On the fifth day, the thought arrives: <span class="example-thought">"what if they think I've forgotten them?"</span> It comes with full emotional weight. The rule, built from willpower, has no answer for a thought that feels like urgent truth. The silence breaks. The story told afterward: four strong days, and this is the exception.</p>
+            <p>The rule controlled the behavior. The thought that drives the behavior was never touched.</p>
+          </div>
+        </div>
+
+        <div class="example-box">
+          <div class="example-label">The Productivity System</div>
+          <div class="example-body">
+            <p>A chronic procrastinator builds an elaborate system. Time blocks, accountability partners, reward structures, a beautiful planner. Works for three weeks.</p>
+            <p>Then a genuinely difficult task arrives. The thought: <span class="example-thought">"what if I do this and it still isn't good enough?"</span> Anxiety arrives with it. The system collapses overnight — because the system was built on willpower, and the thought arrived with more authority than the system had strength.</p>
+          </div>
+        </div>
+
+        <h3>When behavior change is absolutely right</h3>
+        <p>A person in active addiction must stop the behavior — regardless of whether they have examined every thought underneath it. The substance is causing physical harm. The behavior change is not optional and it is not patchwork. It is survival.</p>
+        <p>A person who self-harms needs the behavior interrupted for physical safety. Someone sleeping three hours a night cannot examine thoughts with a brain too depleted to function. Forcing the sleep behavior restores the neurological capacity needed for everything else. Some behaviors must stop before the root can be reached, not after.</p>
+        <p>In these cases, changing behavior is not avoiding the root. It is getting stable enough to find it.</p>
+
+        <div class="pull-quote">
+          <p>The question is never whether to address situation, emotion, or behavior. Sometimes you must. The question is whether you also go one step earlier — to the thought that keeps recreating all three.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART FOUR -->
+    <div class="part-divider" id="part4">
+      <p class="part-number">Part Four</p>
+      <h2 class="part-title">The Root</h2>
+    </div>
+
+    <!-- CHAPTER 9 -->
+    <section class="chapter" id="ch9">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Nine</span>
+        <h2 class="chapter-title"><em>Seven</em> Signals</h2>
+        <p class="chapter-intro">How to know when the thought is the actual problem — and everything else is downstream of it.</p>
+      </div>
+      <div class="prose">
+        <p>The answer is not about timing — it is about recognizing specific signals. These are the markers that tell you the root thought is where the work needs to happen. Any one is enough. More than one appearing together is nearly certain confirmation.</p>
+
+        <div class="signal-item">
+          <div class="signal-num">1</div>
+          <div class="signal-body">
+            <h4>The Pattern Keeps Returning</h4>
+            <p>You changed the situation. Things improved. The same problem appeared again in a new form — different person, different place, same theme. You left the relationship and the next one had the same dynamic. You changed jobs and felt the same way about the new boss. When the same theme follows you across different circumstances, different people, different years — the situation was never the source.</p>
+            <div class="signal-rule">Rule: When the problem follows you, the problem is inside you.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">2</div>
+          <div class="signal-body">
+            <h4>The Relief Never Lasts</h4>
+            <p>You fixed something and felt better. Then the relief had an expiry date. The meditation worked until it didn't. The conversation cleared things up until the same doubt returned a week later. Genuine resolution feels like something closing. Patchwork feels like something being pressed down that keeps pushing back up.</p>
+            <div class="signal-rule">Rule: If you have to keep applying the fix, you haven't found the source.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">3</div>
+          <div class="signal-body">
+            <h4>Small Triggers, Huge Reactions</h4>
+            <p>When a minor event produces an emotion far too large for what actually happened — a two-hour silence that feels like abandonment, mild feedback that feels like worthlessness — an old thought is being activated. The reaction does not match the event. That mismatch is the thought speaking: specifically an old, deep thought triggered by a small present-day moment.</p>
+            <div class="signal-rule">Rule: When the reaction is bigger than the situation deserves, the thought is older than this moment.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">4</div>
+          <div class="signal-body">
+            <h4>You Can Explain It But Not Escape It</h4>
+            <p>The person understands exactly what is happening. They can describe it clearly. They have read about it. They know it intellectually. And still — they keep feeling it. Keep doing it. <em>"I know I shouldn't care but I can't help it."</em> When understanding does not produce change, the thought has not been examined — only managed or described.</p>
+            <div class="signal-rule">Rule: If you can explain the problem perfectly but still can't move — the thought is running deeper than your explanation reaches.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">5</div>
+          <div class="signal-body">
+            <h4>Your Peace Lives Outside You</h4>
+            <p>Your emotional state depends entirely on what other people do or what the situation looks like. You feel fine only when he texts back quickly. Confident only when the boss praises you. Worthy only when you are productive. The moment the external condition changes, the feeling collapses. The thought underneath is: <em>I am only okay when...</em> — and it has never been questioned.</p>
+            <div class="signal-rule">Rule: When your peace lives outside you, a thought inside you is the landlord.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">6</div>
+          <div class="signal-body">
+            <h4>You Avoid Specific Thoughts</h4>
+            <p>Notice when you change the subject in your own mind. Get busy exactly when a certain thought might arise. Reach for the phone, food, distraction — right at the moment a specific feeling starts rising. That avoidance is pointing directly at the thought that most needs examining. What a person least wants to sit with is almost always the root.</p>
+            <div class="signal-rule">Rule: What you most avoid thinking is usually what most needs thinking.</div>
+          </div>
+        </div>
+
+        <div class="signal-item">
+          <div class="signal-num">7</div>
+          <div class="signal-body">
+            <h4>The Same Scene Repeats with Different People</h4>
+            <p>In relationships, with colleagues, with friends — you find yourself having the same argument, the same misunderstanding, the same emotional collision — with different people across different years. Different person. Same dynamic. Same role. Because the thought generating the dynamic is the same, and it recruits whoever is nearby to play the part.</p>
+            <div class="signal-rule">Rule: When different people keep playing the same role in your story, you wrote the role.</div>
+          </div>
+        </div>
+
+        <div class="chapter-rule"></div>
+        <p>The simple test, when uncertain: <em>If this exact situation happened to someone with completely different beliefs about themselves and the world — would they suffer the same way I am?</em> If the answer is no — the suffering is coming from the thought, not the situation. That is when you go to the root.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 10 -->
+    <section class="chapter" id="ch10">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Ten</span>
+        <h2 class="chapter-title">Questioning Without<br><em>Collapsing</em></h2>
+        <p class="chapter-sub">The Thin Line: Under-Confidence vs Confidence vs Over-Confidence</p>
+        <p class="chapter-intro">Because the thought is fused with identity, the approach cannot be confrontation. It must be curiosity.</p>
+      </div>
+      <div class="prose">
+        <p>You cannot tell someone their thought is wrong. The thought is not just a thought — it is, by now, a piece of who they believe themselves to be. Attacking it activates the same response as a physical threat: the brain defends, the identity hardens, the thought becomes even more entrenched.</p>
+        <p>The way in is not through the front door. It is through a question. Not: <em>that is wrong.</em> But: <em>where did that come from?</em> Not: <em>you are mistaken.</em> But: <em>I am curious about this.</em></p>
+
+        <h3>The five-step approach</h3>
+        <p><strong>Name the thought without judgment.</strong> Instead of <em>that thought is wrong,</em> say — to yourself or gently to another: <em>I notice I'm having the thought that...</em> This creates a small but crucial distance between the thinker and the thought. The thinker becomes the observer, not the prisoner.</p>
+        <p><strong>Ask what the thought is protecting you from.</strong> <em>If I let go of the belief that they still love me — what am I left with?</em> The answer is almost always grief, or fear, or the terror of being ordinary rather than chosen. The thought exists to avoid that pain — not because it is true.</p>
+        <p><strong>Test the thought against observable behavior.</strong> Not <em>are they a good person</em> — but <em>does their behavior match the story my brain is telling me?</em> Ask: what does someone who considers you special actually do? Then look at what they actually do. Let the list speak.</p>
+        <p><strong>Name the benefit exchange honestly.</strong> Who receives what in this arrangement? Written out plainly, without judgment — what each person receives — the thought's architecture becomes visible in a way that emotional experience alone cannot show.</p>
+        <p><strong>Reframe toward identity, not away from it.</strong> Because the thought is held in place by identity, the shift must happen at the identity level too. Not: <em>stop believing they love you.</em> But: <em>what does the truest version of you actually deserve?</em> Not <em>leave them</em> but <em>what does real love actually look like?</em> The question expands rather than threatens. And in the expansion, the old thought quietly loses its grip.</p>
+
+        <div class="pull-quote">
+          <p>Curiosity is the only thing that bypasses the identity defense. Because curiosity does not threaten the self — it simply asks a question. And in that question, space opens.</p>
+        </div>
+
+        <h3>The Thin Line: Under-Confidence vs Confidence vs Over-Confidence</h3>
+        <p>Questioning your thoughts is the work. But there is a risk that sits quietly on the other side of it: question too much, too often, and you stop trusting things that were never the problem — your instincts, your judgment, your own sense of what is real. This is under-confidence. Not a lack of ability, but a habit of doubt that has gone too far. The person who questions everything eventually trusts nothing — including themselves. That is not freedom. That is a different kind of trap.</p>
+        <p>On the other end sits over-confidence — the person who never questions at all. Every thought arrives and is immediately believed, defended, acted upon. No gap. No curiosity. No space between the thought and the reaction. This is where automatic thoughts do their most damage, unchallenged and unchecked.</p>
+        <p>Confidence lives in the middle. Not the absence of doubt, but the right relationship with it. The confident person knows <em>which</em> thoughts deserve a question. A thought shaped by fear, by old wounds, by the need to protect — that one deserves scrutiny. A thought rooted in observation, in evidence, in genuine knowing — that one deserves to be believed.</p>
+
+        <div class="pull-quote">
+          <p><em>Question the thought. Not the thinker.</em></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 11 -->
+    <section class="chapter" id="ch11">
+      <div class="chapter-header">
+        <span class="chapter-number">Chapter Eleven</span>
+        <h2 class="chapter-title">The Three<br><em>Layers</em></h2>
+        <p class="chapter-sub">The Depth of Self-Awareness Most People Never Reach</p>
+        <p class="chapter-intro">What we have been building toward is not a destination. It is a way of moving through the world — one layer deeper than most people ever reach.</p>
+      </div>
+      <div class="prose">
+        <p>Self-awareness is a word used so broadly it has nearly lost its shape. Most people who call themselves self-aware mean something much more modest than the thing my work has been pointing toward. There are three distinct layers, and knowing which one you inhabit changes what you understand about your own freedom.</p>
+
+        <div class="layer-card">
+          <p class="layer-num">Layer One</p>
+          <p class="layer-name">Self-Knowledge</p>
+          <p class="layer-desc"><em>"I know what I do."</em><br><br>I know I get jealous. I know I overthink. I know I fall for unavailable people. I know I self-sabotage. This is naming the pattern from a slight distance. Most therapy and self-help brings people here. It feels like a breakthrough. The chain is still running.</p>
+          <p class="layer-quote">"I know I always do this" — while doing it again.</p>
+        </div>
+
+        <div class="layer-card amber">
+          <p class="layer-num">Layer Two</p>
+          <p class="layer-name">Self-Awareness</p>
+          <p class="layer-desc"><em>"I know what I do — and I can see it happening in real time."</em><br><br>This is what this book has been building toward. The moment someone catches a thought as it arrives — before it becomes emotion, before emotion becomes behavior — and says: <em>wait, my brain just generated something. Is this true or is this protection?</em> In that gap — between the thought arriving and the reaction following — is human freedom.</p>
+          <p class="layer-quote">"I notice I'm having the thought that..." — and choosing whether to follow it.</p>
+        </div>
+
+        <div class="layer-card deep">
+          <p class="layer-num">Layer Three</p>
+          <p class="layer-name">Self-Transcendence</p>
+          <p class="layer-desc"><em>"I see the thought. I understand where it came from. And I am not defined by it."</em><br><br>The person is no longer fighting thoughts or managing them. They have stopped identifying with them as the truth of who they are. The thought arrives. They see it. They understand it as something the brain generated — shaped by past pain, by conditioning, by survival — and they can choose whether to follow it or not. Buddhism calls this non-attachment. Stoics called it the observer mind. Psychology calls it psychological flexibility.</p>
+          <p class="layer-quote">"The thought is not me. I am the one watching it."</p>
+        </div>
+
+        <div class="chapter-rule"></div>
+
+        <p>What my work has been building is a practical, grounded path to Layer Two — genuine self-awareness — with a clear view toward the third. Most people spend their entire lives in Layer One at best.</p>
+        <p>Layer Three is not a destination you arrive at permanently. It is something that opens gradually as Layer Two becomes more practiced. Even the most self-aware people slip back into the chain. The difference is they notice faster. The gap between the thought and the identification with it becomes, over time, larger. And in that growing gap, a life of increasing freedom becomes possible.</p>
+
+        <div class="pull-quote">
+          <p>Standard self-awareness asks: what am I feeling and doing? This framework asks: where did this thought come from before it became a feeling and a behavior? That one step earlier — going upstream of the emotion to the thought, and upstream of the thought to the fact that it was generated, not discovered — is the specific thing that changes everything.</p>
+        </div>
+
+        <p>You are not teaching yourself to be emotionless. You are not teaching yourself to distrust everything your mind produces. You are learning to meet each thought with a single gentle question before you follow it: <em>did I discover this, or did I generate it?</em></p>
+        <p>The uninvited narrator has been speaking for as long as you have been alive. It is not your enemy. It is a very fast, very well-meaning system doing its best to keep you safe based on everything it has ever learned. But it learned in the past. And you are standing in the present, with the future still open.</p>
+        <p>You do not have to believe everything you think.</p>
+        <p>That, in the end, is the whole of it.</p>
+      </div>
+    </section>
+
+    <!-- ABOUT THE AUTHOR -->
+    <div class="about-author" id="about">
+      <div class="about-rule"></div>
+      <p class="about-eyebrow">About the Author</p>
+      <div class="about-body">
+        <p class="about-intro">Rijo John is a software engineer and AI practitioner by profession, and a passionate cricketer, traveller, and adventurer by life.</p>
+        <p>His understanding of the mind did not come from a classroom. It came from the road — from years of travelling, meeting people across wildly different circumstances, and watching how they think, react, and behave. He worked hard to build this life deliberately, curating every experience with intention — a life he gave a name: the <em>experimental life</em>.</p>
+        <p>Outside of technology, his interests span an unusually wide territory: the mechanics of the human brain, the big questions of philosophy and physics, the patterns that psychology reveals in everyday life.</p>
+        <p>At the core of it is a single driving question: <em>what is actually going on here?</em> With reality. With consciousness. With the choices people make. With the stories humanity tells about itself. That question is what connects a career in AI with a framework about automatic thoughts — they are both, in the end, about understanding how minds work.</p>
+        <p class="about-closing">He writes from experience, not theory. The science of the mind, for Rijo, is something you discover by living it.</p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="book-footer">
+      <div class="section-break">· · ·</div>
+      <p>This framework was written from observation, not academia. The ideas came from living, watching, and questioning — the only laboratory that ever made sense.</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Progress bar
+const bar = document.getElementById('progress-bar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// Theme toggle
+const toggle = document.getElementById('theme-toggle');
+const root = document.documentElement;
+let theme = localStorage.getItem('narrator-theme') || 'system';
+function applyTheme(t) {
+  if (t === 'dark') root.setAttribute('data-theme', 'dark');
+  else if (t === 'light') root.setAttribute('data-theme', 'light');
+  else root.removeAttribute('data-theme');
+  toggle.textContent = t === 'dark' ? '◑ Dark' : t === 'light' ? '◐ Light' : '◐ Theme';
+}
+applyTheme(theme);
+toggle.addEventListener('click', () => {
+  theme = theme === 'system' ? 'dark' : theme === 'dark' ? 'light' : 'system';
+  localStorage.setItem('narrator-theme', theme);
+  applyTheme(theme);
+});
+
+// Active TOC highlighting
+const chapters = document.querySelectorAll('.chapter, #introduction, #cover');
+const links = document.querySelectorAll('.toc-link');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { threshold: 0.2 });
+chapters.forEach(c => observer.observe(c));
+</script>
+</body>
+</html>
